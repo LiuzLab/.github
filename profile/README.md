@@ -1,2 +1,2 @@
 **Skyriver Guides**
-* [Skyriver Orientation](SkyDoc.md)
+* [Skyriver Orientation](skydocs.md)
