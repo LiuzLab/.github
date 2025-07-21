@@ -1,0 +1,64 @@
+#!/bin/bash
+#SBATCH --job-name=tunnel_job
+#SBATCH --output=tunnel_job.out
+#SBATCH --error=tunnel_job.err
+#SBATCH --partition=defq15
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=08:00:00
+
+# Configuration
+PORT_RANGE_START=8787
+PORT_RANGE_END=8899
+HEAD_NODE=leia1.cm.cluster
+HEAD_NODE_SERVE=skyriver.nri.bcm.edu
+USER=$USER
+
+# Find available port on worker node
+find_available_port() {
+  for ((port=$PORT_RANGE_START; port<=$PORT_RANGE_END; port++)); do
+    if ! ss -ltn | awk '{print $4}' | grep -q ":$port$"; then
+      echo $port
+      return
+    fi
+  done
+  echo ""
+}
+
+WORKER_PORT=$(find_available_port)
+if [[ -z "$WORKER_PORT" ]]; then
+  echo "❌ No available port found on worker node in range $PORT_RANGE_START-$PORT_RANGE_END"
+  exit 1
+fi
+
+# WORKER_PORT=5000 # use this if you want a specific port on worker node
+
+# Find available port on head node via SSH
+HEAD_PORT=$(ssh $USER@$HEAD_NODE /bin/bash <<EOF
+for port in {$PORT_RANGE_START..$PORT_RANGE_END}; do
+  if ! ss -ltn | awk '{print \$4}' | grep -q ":\\\$port\$"; then
+    echo \$port
+    exit 0
+  fi
+done
+exit 1
+EOF
+)
+
+if [[ -z "$HEAD_PORT" ]]; then
+  echo "❌ No available port found on head node $HEAD_NODE"
+  exit 1
+fi
+
+# Info
+
+echo "✅ Tunnel established."
+echo "    ➜  Local (worker node): http://$(hostname -f):$WORKER_PORT"
+echo "    ➜  Headnode :  http://$HEAD_NODE_SERVE:$HEAD_PORT"
+
+
+# Establish SSH tunnel
+ssh -o ExitOnForwardFailure=yes -o GatewayPorts=yes -R 0.0.0.0:$HEAD_PORT:localhost:$WORKER_PORT $USER@$HEAD_NODE -f -N
+
+echo "🕓 Holding job open to preserve tunnel..."
+tail -f /dev/null
