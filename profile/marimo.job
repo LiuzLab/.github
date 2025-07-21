@@ -1,0 +1,89 @@
+#!/bin/bash
+#SBATCH --job-name=marimo_tunnel
+#SBATCH --output=marimo_tunnel.out
+#SBATCH --error=marimo_tunnel.err
+#SBATCH --time=01:00:00
+#SBATCH --partition=defq15
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4GB
+
+# Define port range
+PORT_START=8787
+PORT_END=8899
+
+# Generate a secure random password for Marimo
+MARIMO_PASSWORD=$(openssl rand -base64 12)
+
+# Function to find an available port on the local node
+find_available_port() {
+    for ((port=$PORT_START; port<=$PORT_END; port++)); do
+        if ! ss -ltn | awk '{print $4}' | grep -q ":$port\$"; then
+            echo "$port"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# 1. Find available port on worker node
+WORKER_PORT=$(find_available_port)
+if [[ -z "$WORKER_PORT" ]]; then
+    echo "No available port found on worker node." >&2
+    exit 1
+fi
+
+# 2. Find available port on head node using SSH
+HEAD_NODE=leia1.cm.cluster
+USER=$USER
+
+HEAD_PORT=$(ssh $USER@$HEAD_NODE /bin/bash <<EOF
+for port in {$PORT_START..$PORT_END}; do
+    if ! ss -ltn | awk '{print \$4}' | grep -q ":\\\$port\$"; then
+        echo \$port
+        exit 0
+    fi
+done
+exit 1
+EOF
+)
+
+if [[ -z "$HEAD_PORT" ]]; then
+    echo "No available port found on head node." >&2
+    exit 1
+fi
+
+echo "Using worker node port: $WORKER_PORT"
+echo "Using head node port: $HEAD_PORT"
+
+# 3. Start marimo on worker node (in screen, logs go to Slurm output)
+MARIMO_RUN_SCRIPT="start_marimo.sh"
+
+cat <<EOF > $MARIMO_RUN_SCRIPT
+#!/bin/bash
+module load anaconda3
+source \$(conda info --base)/etc/profile.d/conda.sh
+#assuming marimo package is installed on this conda env 'marimo_conda'
+conda activate marimo_conda 
+nohup setsid marimo edit --headless --host 0.0.0.0 --port $WORKER_PORT --token-password $MARIMO_PASSWORD > marimo.log 2>&1 &
+EOF
+
+chmod +x $MARIMO_RUN_SCRIPT
+echo "Launching Marimo with nohup+setsid:"
+cat $MARIMO_RUN_SCRIPT
+bash $MARIMO_RUN_SCRIPT
+
+
+# Wait briefly to ensure marimo starts
+sleep 3
+
+# 4. Establish SSH reverse tunnel
+SSH_CMD="nohup setsid ssh -o GatewayPorts=yes -R 0.0.0.0:$HEAD_PORT:localhost:$WORKER_PORT $USER@$HEAD_NODE -f -N > ssh_tunnel.log 2>&1 &"
+echo "Launching SSH reverse tunnel:"
+echo "$SSH_CMD"
+eval $SSH_CMD
+
+
+echo "Reverse tunnel established!"
+echo "Access Marimo at: http://$HEAD_NODE:$HEAD_PORT"
+echo "Password: $MARIMO_PASSWORD"
