@@ -71,8 +71,13 @@ srun --pty \
      --nodes=1 --ntasks=1 \
      ssh -N -R 127.0.0.1:${PORT}:127.0.0.1:22 ${USERNAME}@leia1"
 
-CMD0="ssh -t ${USERNAME}@skyriver.nri.bcm.edu \"${REMOTE_CMD}\""
+# Ensure logs directory exists
+if [[ ! -d ~/logs ]]; then
+  echo -e "\n💻 Creating logs directory at ~/logs"
+  mkdir -p ~/logs
+fi
 
+CMD0="ssh -t ${USERNAME}@skyriver.nri.bcm.edu \"${REMOTE_CMD}\""
 echo -e "\n💻 Starting SSH job on any available node"
 screen -S "$SESSION" -X screen bash -c "$CMD0 >~/logs/${SESSION}_win0.log 2>&1; exec bash"
 
