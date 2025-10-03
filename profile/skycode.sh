@@ -5,6 +5,9 @@ SESSION_PREFIX="skycode"
 
 usage() {
   cat <<EOF
+  Before using this script, set up passwordless SSH login to skyriver.nri.bcm.edu:
+  👉 https://www.linuxbabe.com/linux-server/setup-passwordless-ssh-login
+
 Usage:
   $0 -s [-p PORT]        # stop mode
   $0 -u USER -p PORT     # start mode (no reservation, partition, or node)
