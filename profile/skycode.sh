@@ -72,6 +72,7 @@ REMOTE_CMD="source /etc/profile && module load slurm && \
 srun --pty \
      --job-name=sky-${USERNAME} \
      --nodes=1 --ntasks=1 \
+     --partition=debugq \
      ssh -N -R 127.0.0.1:${PORT}:127.0.0.1:22 ${USERNAME}@leia1"
 
 # Ensure logs directory exists
