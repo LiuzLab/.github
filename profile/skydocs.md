@@ -4,7 +4,10 @@
 
 Welcome! You now have access to our Slurm-based compute cluster.
 
-Here's a quick guide to get you productive fast. Skyriver page ([Skyriver page](http://skyriver.nri.bcm.edu:4200/#/nodes))
+Here's a quick guide to get you productive fast. 
+
+Cluster realtime usage and details available at : ([Skyriver page](http://skyriver.nri.bcm.edu:4200/#/nodes))
+
 ---
 
 ## 📍 1. You are here
@@ -98,6 +101,12 @@ Different queues (also called **partitions**) are available for various workload
 | **defq610** | Long-duration CPU queue            | Multi-day runs or batch pipelines (>15 hrs)                |
 | **a30q**    | GPU queue with NVIDIA A30 GPUs     | Moderate GPU workloads (e.g., model training, inference)   |
 | **a100q**   | GPU queue with NVIDIA A100 GPUs    | High-performance GPU workloads (large-scale deep learning) |
+
+## 3.2 Using Visual studio code and wsl
+
+Please utilize this helper script ([skycode.sh](https://github.com/LiuzLab/.github/blob/main/profile/skycode.sh)) 
+
+Windows users can run bash scripts using wsl : ([wsl usage](https://github.com/LiuzLab/.github/blob/main/profile/using_wsl.md))
 
 ---
 
