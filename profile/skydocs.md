@@ -47,6 +47,7 @@ Do you want to enter a compute shell? [Y/n]
 * Press `Y` or hit **Enter** to start a Slurm interactive shell on a worker node
 * Press `N` to stay on the head node for lightweight tasks (like file browsing)
 
+Note: You will not be able to create srun session through this auto compute shell. If you plan to run srun, please press "N" and stay on head node.
 ---
 
 ## ⚙️ 3. Running Jobs
