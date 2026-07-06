@@ -1,4 +1,4 @@
-# 👋 Welcome to LiuzLab
+# 👋 Welcome to Liu Lab
 
 We're a computational biology lab building tools, pipelines, and analyses for genomics research.
 
